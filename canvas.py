@@ -10,7 +10,7 @@ import numpy as np
 class Canvas:
     # Maximum pixel distance to bridge across when drawing resumes after a
     # brief finger lift.  Increase to bridge wider gaps; set to 0 to disable.
-    MAX_BRIDGE_GAP = 30
+    MAX_BRIDGE_GAP = 0
 
     def __init__(self, width: int, height: int):
         self.width         = width

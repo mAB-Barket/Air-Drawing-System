@@ -14,12 +14,10 @@ COLORS = {
 }
 
 GESTURE_HINTS = [
-    "☝ Index: Draw",
-    "✌ 2 fingers: Red",
-    "🤟 3 fingers: Green",
-    "🖖 4 fingers: Blue",
-    "✋ Palm: Erase",
-    "C: Clear   Q: Quit",
+    "Pinch: Draw",
+    "V 2 fingers: Color",
+    "Palm: Erase",
+    "C: Clear  Q: Quit",
 ]
 
 
