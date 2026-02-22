@@ -1,103 +1,127 @@
-# ✋ Air Writing System
+# Air Writing System
 
-A real-time **Air Drawing** application built with Python, OpenCV, and MediaPipe.  
-Point your finger at the webcam and draw in the air — no touchscreen needed!
+Write in thin air using just your hand. A real-time gesture-controlled drawing application built with Python, OpenCV, and MediaPipe.
+
+![Python](https://img.shields.io/badge/Python-3.8+-blue?logo=python&logoColor=white)
+![OpenCV](https://img.shields.io/badge/OpenCV-4.x-green?logo=opencv&logoColor=white)
+![MediaPipe](https://img.shields.io/badge/MediaPipe-0.10+-orange?logo=google&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 
 ---
 
-## 🎮 Gesture Controls
+## How It Works
+
+Your webcam tracks 21 hand landmarks in real-time. A custom **gesture state machine** interprets your hand pose and translates it into drawing actions — no physical contact with any surface required.
+
+---
+
+## Gesture Controls
 
 | Gesture | Action |
-|---|---|
-| ☝️ **Index finger only** | Draw with current color |
-| ✌️ **Index + Middle** | Change color → **Red** |
-| 🤟 **Index + Middle + Ring** | Change color → **Green** |
-| 🖖 **Index + Middle + Ring + Pinky** | Change color → **Blue** |
-| ✋ **Full open palm** | Eraser mode |
-| **`C` key** | Clear the entire canvas |
-| **`Q` key** | Quit the application |
+|---------|--------|
+| **Pinch** (thumb + index finger together) | Start drawing |
+| **Release pinch** | Stop drawing — reposition freely |
+| **V-sign** (index + middle finger up) | Cycle pen color |
+| **Open palm** (all fingers spread) | Erase mode |
+| `C` key | Clear entire canvas |
+| `Q` key / Close window | Quit |
+
+**Available colors:** Blue (default) → Red → Green → White → Blue ...
 
 ---
 
-## 🖥️ System Requirements
+## Quick Start
 
-- Python **3.8** or higher
-- A working **webcam**
+### Prerequisites
 
----
+- Python 3.8+
+- A webcam
 
-## ⚙️ Installation
-
-**Step 1 — Install Python** (if not already installed)  
-Download from [python.org](https://www.python.org/downloads/)
-
-**Step 2 — Install dependencies**
-
-Open a terminal / command prompt in this project folder and run:
+### Installation
 
 ```bash
+git clone https://github.com/mAB-Barket/Air-Drawing-System.git
+cd Air-Drawing-System
 pip install -r requirements.txt
 ```
 
-Or manually:
-
-```bash
-pip install opencv-python mediapipe numpy
-```
-
----
-
-## ▶️ Running the App
+### Run
 
 ```bash
 python air_draw.py
 ```
 
-A window titled **"Air Writing System"** will open showing your webcam feed.
-
-> **Tip:** Make sure your hand is well-lit and clearly visible to the camera for best tracking accuracy.
+The window opens at 1/4 of your screen size, centered. Start pinching to write.
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
-Air Writing/
-├── air_draw.py        ← Main application (run this)
-├── hand_tracker.py    ← MediaPipe hand landmark detection & finger logic
-├── canvas.py          ← Virtual drawing canvas management
-├── ui_overlay.py      ← HUD display (mode, color, gesture hints)
-├── requirements.txt   ← Python dependencies
-└── README.md          ← This file
+Air-Drawing-System/
+├── air_draw.py         # Main app — state machine, main loop, cursor smoothing
+├── hand_tracker.py     # MediaPipe wrapper — raw hand landmark detection
+├── canvas.py           # Virtual drawing canvas with stroke management
+├── ui_overlay.py       # HUD overlay — mode display, color indicator, hints
+├── hand_landmarker.task# MediaPipe model file (auto-downloaded on first run)
+├── requirements.txt    # Python dependencies
+└── README.md
 ```
 
 ---
 
-## 🔬 How It Works
+## Architecture
 
-1. **MediaPipe Hands** detects 21 landmarks on your hand every frame.
-2. `hand_tracker.py` compares each **fingertip Y-coordinate** to its **PIP knuckle Y-coordinate**.  
-   - If the tip is *above* the knuckle (`tip_y < pip_y`) → finger is **UP**.
-3. The combination of fingers that are up determines the **gesture**.
-4. `canvas.py` maintains a NumPy array (same size as the webcam frame) where lines are drawn.
-5. The canvas is **blended** onto the live webcam feed using bitmasking.
-6. `ui_overlay.py` draws the semi-transparent HUD bars, finger indicators, and gesture hints.
+```
+Webcam Frame
+     │
+     ▼
+ HandTracker          ← Raw landmarks, pinch distance, finger states
+     │
+     ▼
+ GestureStateMachine  ← Single source of truth: IDLE / DRAW / COLOR / ERASE
+     │
+     ▼
+ CursorSmoother       ← EMA-smoothed cursor position
+     │
+     ▼
+ Canvas + UIOverlay   ← Draw strokes, blend onto frame, render HUD
+     │
+     ▼
+ Display
+```
+
+**Key design decisions:**
+- **Instant draw activation** — pinch is detected in 1 frame, zero lag
+- **Sticky draw state** — requires 3 frames of clear unpinch to stop, preventing jitter mid-stroke
+- **No direct DRAW → ERASE** — must pass through IDLE first, eliminating accidental erasing
+- **Pinch midpoint cursor** — draws at the point between thumb and index tip for maximum stability
 
 ---
 
-## 🛠️ Troubleshooting
+## Troubleshooting
 
-| Problem | Solution |
-|---|---|
-| Webcam not opening | Change `WEBCAM_INDEX = 0` to `1` or `2` in `air_draw.py` |
-| Laggy tracking | Reduce `FRAME_WIDTH`/`FRAME_HEIGHT` in `air_draw.py` |
-| Finger detection inaccurate | Improve lighting; keep hand within frame |
-| `mediapipe` install error | Try `pip install mediapipe==0.10.9` |
+| Problem | Fix |
+|---------|-----|
+| Webcam not detected | Change `WEBCAM_INDEX = 0` to `1` in `air_draw.py` |
+| Laggy performance | Lower `FRAME_WIDTH` / `FRAME_HEIGHT` in `air_draw.py` |
+| Inaccurate tracking | Improve lighting, keep hand fully in frame |
+| Drawing stops randomly | Pinch more firmly — thumb and index tips must be close |
 
 ---
 
-## 👨‍💻 Tech Stack
+## Tech Stack
 
-- [OpenCV](https://opencv.org/) — webcam capture & image processing  
-- [MediaPipe](https://mediapipe.dev/) — real-time hand landmark detection  
-- [NumPy](https://numpy.org/) — canvas array operations
+- **[OpenCV](https://opencv.org/)** — Webcam capture, image processing, rendering
+- **[MediaPipe](https://mediapipe.dev/)** — Real-time hand landmark detection (21 points)
+- **[NumPy](https://numpy.org/)** — Array operations for canvas and coordinate math
+
+---
+
+## License
+
+MIT
+
+---
+
+**Built by [@mAB-Barket](https://github.com/mAB-Barket)**
